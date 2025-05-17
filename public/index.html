@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>简洁聊天室</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/emoji-button.min.js"></script>
+
+</head>
+<body>
+  <h1>💬 欢迎来到聊天室</h1>
+  <button id="toggle-theme" style="position: absolute; top: 20px; right: 20px;">🌙 夜间模式</button>
+
+  <div id="online-box">
+    <h3>在线用户</h3>
+    <div id="user-count" style="margin-bottom: 6px; color: #666;"></div> <!-- ✅ 新增这一行 -->
+    <ul id="online-users"></ul>
+  </div>
+
+  <div id="chat-box">
+    <ul id="messages"></ul>
+  </div>
+  <div id="input-area">
+    <input id="msgInput" placeholder="输入你的消息..." />
+    <input type="file" id="fileInput" />
+    <button id="emojiBtn">😀</button>
+
+    <button id="sendBtn">发送</button>
+  </div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    let privateRecipient = null;  // 【新增全局变量：用于存储当前私聊对象】
+
+    const socket = io();
+
+    const onlineList = document.getElementById('online-users');
+
+    const fileInput = document.getElementById('fileInput');
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        // 发送文件数据
+        socket.emit('file message', {
+          from: nickname,
+          filename: file.name,
+          filetype: file.type,
+          filesize: file.size,
+          content: reader.result   // base64
+        });
+      };
+      reader.readAsDataURL(file);   // ✅ 读取为 base64
+    });
+
+
+    socket.on('online users', (users) => {
+      onlineList.innerHTML = '';
+      const countBox = document.getElementById('user-count');
+      countBox.textContent = `当前在线：${users.length} 人`;
+      users.forEach(user => {
+        const item = document.createElement('li');
+
+        const isMe = user.name === nickname;
+        item.textContent = isMe ? `${user.name}（我）` : user.name;
+
+        if (isMe) {
+          item.style.fontWeight = 'bold';
+          item.style.color = '#4a90e2';
+        }
+
+        item.setAttribute('data-id', user.id);
+        item.addEventListener('click', () => {
+          if (privateRecipient && privateRecipient.id === user.id) {
+            privateRecipient = null;
+            item.style.backgroundColor = '';
+            alert('取消私聊');
+          } else {
+            privateRecipient = user;
+            document.querySelectorAll('#online-users li').forEach(li => {
+              li.style.backgroundColor = '';
+            });
+            item.style.backgroundColor = '#ffffcc';
+            alert('设置私聊对象：' + user.name);
+          }
+        });
+
+      onlineList.appendChild(item);
+      });
+    });
+
+
+
+    // 获取昵称
+    let nickname = '';
+    while (!nickname) {
+    nickname = prompt("请输入你的昵称：");
+    nickname = nickname?.trim();
+    }
+
+    // 加入聊天室，发送昵称到服务端
+    socket.emit('join', nickname);
+
+    const input = document.getElementById('msgInput');
+    const button = document.getElementById('sendBtn');
+    const messages = document.getElementById('messages');
+
+    const emojiBtn = document.getElementById('emojiBtn');
+
+    const picker = new window.EmojiButton({
+      position: 'top-start',
+      theme: 'auto'
+    });
+
+
+    picker.on('emoji', emoji => {
+      input.value += emoji;
+    });
+
+    emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
+
+
+
+    button.onclick = () => {
+      const msg = input.value.trim();
+      if (msg) {
+        const now = new Date();
+        const timestamp = now.toLocaleTimeString();
+        const msgObj = {
+          id: Date.now(),       // 唯一 ID
+          name: nickname,
+          text: msg,
+          time: timestamp
+        };
+
+        if (privateRecipient) {
+      // 如果设置了私聊对象，则加入标记，并发送私聊消息
+          msgObj.private = true;      // 可选，用于后续样式判断
+          msgObj.toName = privateRecipient.name;  // 显示目标名字
+          socket.emit('private message', { to: privateRecipient.id, msg: msgObj });
+        } else {
+      // 否则，按公开消息发送
+          socket.emit('chat message', msgObj);
+        }
+      input.value = '';
+      }
+    };
+
+
+    socket.on('chat message', ({ id, name, text, time }) => {
+      const item = document.createElement('li');
+      const isMe = name === nickname;
+
+      item.id = `msg-${id}`;                          // 🟦 给 li 一个唯一 ID
+      item.className = isMe ? 'my-message' : 'other-message';
+      item.innerHTML = `<strong>[${name}]</strong> ${text} <span class="timestamp">（${time}）</span>`;
+
+      if (isMe) {
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '撤回';
+        delBtn.onclick = () => {
+          socket.emit('delete message', id);         // 🟦 发送删除请求
+        };
+        item.appendChild(delBtn);
+      }
+
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    socket.on('file message', (file) => {
+      const item = document.createElement('li');
+      item.className = file.from === nickname ? 'my-message' : 'other-message';
+
+      let contentHtml = `<strong>[${file.from}] 发送了文件：</strong> `;
+
+      if (file.filetype.startsWith('image/')) {
+        // 如果是图片
+        contentHtml += `<br><img src="${file.content}" style="max-width:200px; border-radius:8px;" />`;
+      } else {
+        // 其他文件类型
+        contentHtml += `<a href="${file.content}" download="${file.filename}">${file.filename}</a>`;
+      }
+
+      item.innerHTML = contentHtml;
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+
+    socket.on('private message', ({ from, msg }) => {
+      const item = document.createElement('li');
+      const isMe = from === nickname;
+      item.id = `msg-${msg.id}`;
+      item.className = isMe ? 'my-message' : 'other-message';
+      // 添加私聊标记，例如在昵称前加 "[私聊]"
+      item.innerHTML = `<strong>[私聊][${from}]</strong> ${msg.text} <span class="timestamp">（${msg.time}）</span>`;
+  
+      if (isMe) {
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '撤回';
+        delBtn.onclick = () => {
+        socket.emit('delete message', msg.id);
+      };
+        item.appendChild(delBtn);
+      }
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+
+
+    socket.on('system message', ({ text, time }) => {
+        const item = document.createElement('li');
+        item.style.color = '#888';
+        item.style.fontStyle = 'italic';
+        item.innerHTML = `${text} <span style="font-size: 12px; color: #aaa;">（${time}）</span>`;
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+    });
+
+    socket.on('delete message', (id) => {
+      const target = document.getElementById(`msg-${id}`);
+      if (target) target.remove();
+    });
+
+    const themeBtn = document.getElementById('toggle-theme');
+
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+
+      if (document.body.classList.contains('dark-mode')) {
+        themeBtn.textContent = '☀️ 白天模式';
+      } else {
+        themeBtn.textContent = '🌙 夜间模式';
+      }
+
+      // 可选记忆功能
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+
+    // 页面加载自动恢复主题
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('toggle-theme').textContent = '☀️ 白天模式';
+    }
+
+
+
+
+
+
+
+</script>
+  
+</body>
+</html>
