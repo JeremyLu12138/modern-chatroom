@@ -21,7 +21,18 @@
 
   <div id="input-area">
     <input id="msgInput" placeholder="输入你的消息..." />
-    <button id="emojiBtn">😀</button>
+    <select id="emojiSelect">
+      <option value="">😀</option>
+      <option value="😀">😀</option>
+      <option value="😂">😂</option>
+      <option value="😍">😍</option>
+      <option value="🥺">🥺</option>
+      <option value="😎">😎</option>
+      <option value="👍">👍</option>
+      <option value="🎉">🎉</option>
+      <option value="🔥">🔥</option>
+      <option value="❤️">❤️</option>
+    </select>
     <button id="uploadBtn">📎</button>
     <input type="file" id="fileInput" style="display: none" />
     <button id="sendBtn">发送</button>
@@ -50,6 +61,24 @@
 
     const uploadBtn = document.getElementById('uploadBtn');
     const fileInput = document.getElementById('fileInput');
+
+    const themeBtn = document.getElementById('toggle-theme');
+    const emojiSelect = document.getElementById('emojiSelect');
+
+    themeBtn.addEventListener('click', () => {
+      const dark = document.body.classList.toggle('dark-mode');
+      themeBtn.textContent = dark ? '☀️ 白天模式' : '🌙 夜间模式';
+    });
+
+
+    emojiSelect.onchange = () => {
+    const emoji = emojiSelect.value;
+    if (emoji) {
+      input.value += emoji;
+      emojiSelect.selectedIndex = 0; // 重置为“😀 表情”
+    }
+    };
+
 
     uploadBtn.onclick = () => fileInput.click();
 
