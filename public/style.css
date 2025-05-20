@@ -26,7 +26,7 @@ ul {
 #messages {
   display: flex;
   flex-direction: column;
-  gap: 12px; /* 每条消息之间的间距 */
+  gap: 12px; /*The spacing between each message */
 }
 
 #messages li {
@@ -41,7 +41,7 @@ ul {
 
 .my-message {
   background-color: #dcf8c6;
-  align-self: flex-end;      /* 靠右 */
+  align-self: flex-end;      /* Keep Right */
   padding: 10px 14px;
   border-radius: 16px 16px 0 16px;
   max-width: 75%;
@@ -51,7 +51,7 @@ ul {
 
 .other-message {
   background-color: #f1f0f0;
-  align-self: flex-start;    /* 靠左 */
+  align-self: flex-start;    /* keep left */
   padding: 10px 14px;
   border-radius: 16px 16px 16px 0;
   max-width: 75%;
@@ -151,30 +151,30 @@ ul {
   transition: 0.2s;
 }
 
-/* ✅ 柔和暗灰背景 & 高亮文字 */
+/* Soft dark gray background & bright text */
 body.dark-mode {
   background-color: #2b2b2b;
   color: #f1f1f1;
 }
 
-/* ✅ 顶部标题变亮 */
+/* Top title brightens */
 body.dark-mode h1 {
   color: #f1f1f1;
 }
 
-/* ✅ 在线用户卡片 */
+/* Online User Card */
 body.dark-mode #online-box {
   background-color: #333;
   border: 1px solid #555;
   color: #e0e0e0;
 }
 
-/* ✅ 在线用户列表文字 */
+/* Online user list text */
 body.dark-mode #online-users li {
   color: #e0e0e0;
 }
 
-/* ✅ 输入框与按钮区域 */
+/* Input box and button area */
 body.dark-mode #input-area {
   background-color: #2d2d2d;
   border-top: 1px solid #444;
@@ -193,7 +193,7 @@ body.dark-mode #emojiBtn:hover {
   background-color: #555;
 }
 
-/* ✅ 消息泡调整亮 */
+/* Message bubble adjustment brightness */
 body.dark-mode .my-message {
   background-color: #295c86;
 }
@@ -201,22 +201,22 @@ body.dark-mode .other-message {
   background-color: #3d3d3d;
 }
 
-/* ✅ 时间戳与系统提示 */
+/* Timestamp and system prompts */
 body.dark-mode .timestamp,
 body.dark-mode .system-message {
   color: #aaa;
 }
 
-/* ✅ 夜间模式切换按钮 */
+/* Night mode toggle button */
 body.dark-mode #toggle-theme {
   background: #444;
   color: #eee;
 }
 
 #emojiSelect {
-  appearance: none;         /* ✅ 现代浏览器隐藏箭头 */
-  -webkit-appearance: none; /* ✅ Safari/Chrome */
-  -moz-appearance: none;    /* ✅ Firefox */
+  appearance: none;        
+  -webkit-appearance: none; 
+  -moz-appearance: none;    
   background-color: #007bff;
   color: white;
   padding: 10px 16px;
@@ -226,10 +226,9 @@ body.dark-mode #toggle-theme {
   border-radius: 999px;
   cursor: pointer;
   margin-left: 8px;
-  background-image: none;   /* ✅ 移除下拉箭头图标 */
+  background-image: none;   
 }
 
-/* ✅ 隐藏下拉箭头在 Firefox 上还需这句 */
 #emojiSelect::-ms-expand {
   display: none;
 }
@@ -238,7 +237,6 @@ body.dark-mode #toggle-theme {
   background-color: #0056b3;
 }
 
-/* 夜间模式下匹配按钮样式 */
 body.dark-mode #emojiSelect {
   background-color: #444;
   color: #fff;

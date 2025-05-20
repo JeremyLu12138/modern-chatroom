@@ -2,25 +2,25 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>聊天室</title>
+  <title>Chatroom</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <button id="toggle-theme">🌙 夜间模式</button>
-  <h1>欢迎来到聊天室</h1>
+  <button id="toggle-theme">🌙 Dark Mode</button>
+  <h1>Welcome to the Chatroom</h1>
 
   <div id="chat-box">
     <ul id="messages"></ul>
   </div>
 
   <div id="online-box">
-    <h3>在线用户</h3>
+    <h3>Online Users</h3>
     <div id="user-count"></div>
     <ul id="online-users"></ul>
   </div>
 
   <div id="input-area">
-    <input id="msgInput" placeholder="输入你的消息..." />
+    <input id="msgInput" placeholder="Enter your message..." />
     <select id="emojiSelect">
       <option value="">😀</option>
       <option value="😀">😀</option>
@@ -35,7 +35,7 @@
     </select>
     <button id="uploadBtn">📎</button>
     <input type="file" id="fileInput" style="display: none" />
-    <button id="sendBtn">发送</button>
+    <button id="sendBtn">Send</button>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -43,15 +43,15 @@
   window.onload = () => {
     const socket = io();
   
-    // 获取昵称（无本地记忆）
+    //get name
     let nickname = '';
     while (!nickname) {
-      nickname = prompt("请输入你的昵称：")?.trim();
+      nickname = prompt("Please enter your nickname：")?.trim();
     }
   
     socket.emit('join', nickname);
   
-    // DOM 元素
+    // DOM 
     const input = document.getElementById('msgInput');
     const button = document.getElementById('sendBtn');
     const messages = document.getElementById('messages');
@@ -67,7 +67,7 @@
 
     themeBtn.addEventListener('click', () => {
       const dark = document.body.classList.toggle('dark-mode');
-      themeBtn.textContent = dark ? '☀️ 白天模式' : '🌙 夜间模式';
+      themeBtn.textContent = dark ? '☀️ Light Mode' : '🌙 Dark Mode';
     });
 
 
@@ -75,7 +75,7 @@
     const emoji = emojiSelect.value;
     if (emoji) {
       input.value += emoji;
-      emojiSelect.selectedIndex = 0; // 重置为“😀 表情”
+      emojiSelect.selectedIndex = 0; 
     }
     };
 
@@ -98,9 +98,7 @@
       reader.readAsDataURL(file);
     });
 
-
-  
-    // 点击发送按钮
+    // Click the Send button
     button.onclick = () => {
       const msg = input.value.trim();
       if (!msg) return;
@@ -121,12 +119,12 @@
       input.value = '';
     };
   
-    // 回车快捷发送
+    // Enter to send quickly
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter') button.click();
     });
   
-    // 接收群聊消息
+    // Receive group chat messages
     socket.on('chat message', ({ id, name, text, time }) => {
       const li = document.createElement('li');
       li.className = name === nickname ? 'my-message' : 'other-message';
@@ -139,15 +137,14 @@
       `;
       messages.appendChild(li);
     });
-
   
-    // 接收私聊消息
+    // Receive private messages
     socket.on('private message', ({ from, msg }) => {
       const li = document.createElement('li');
       li.className = from === nickname ? 'my-message' : 'other-message';
       li.innerHTML = `
         <div>
-          <strong>[私聊][${from}]</strong>
+          <strong>[Private Chat][${from}]</strong>
           <span class="timestamp">（${msg.time}）</span>
         </div>
         <div>${msg.text}</div>
@@ -155,7 +152,7 @@
       messages.appendChild(li);
     });
 
-    // 系统消息
+    // System Messages
     socket.on('system message', ({ text, time }) => {
       const li = document.createElement('li');
       li.className = 'system-message';
@@ -166,31 +163,31 @@
       messages.appendChild(li);
     });
   
-    // 显示在线用户列表
+    // Display the list of online users
     socket.on('online users', (users) => {
       onlineList.innerHTML = '';
-      userCountBox.textContent = `当前在线：${users.length} 人`;
+      userCountBox.textContent = `Currently online：${users.length} people`;
   
       users.forEach(user => {
         const li = document.createElement('li');
         const isMe = user.name === nickname;
-        li.textContent = isMe ? `${user.name}（我）` : user.name;
+        li.textContent = isMe ? `${user.name}（me）` : user.name;
         li.setAttribute('data-id', user.id);
         if (isMe) li.style.fontWeight = 'bold';
   
-        // 点击设置/取消私聊对象
+        // Click to set/cancel private chat object
         li.onclick = () => {
           if (privateRecipient && privateRecipient.id === user.id) {
             privateRecipient = null;
             li.style.backgroundColor = '';
-            alert('已取消私聊');
+            alert('Private chat cancelled');
           } else {
             privateRecipient = user;
             document.querySelectorAll('#online-users li').forEach(el => {
               el.style.backgroundColor = '';
             });
             li.style.backgroundColor = '#ffffcc';
-            alert('你正在私聊：' + user.name);
+            alert('You are chatting privately：' + user.name);
           }
         };
   
@@ -223,9 +220,6 @@
   };
   </script>
   
-  
-
-
 </body>
 </html>
 

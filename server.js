@@ -15,16 +15,16 @@ app.use(express.static('public'));
 const onlineUsers = new Map();
 
 io.on('connection', (socket) => {
-  console.log('📥 有用户连接');
+  console.log('📥 A user connected');
 
   let nickname = '';
 
     socket.on('join', (name) => {
       nickname = name;
-      onlineUsers.set(socket.id, nickname);  // 注册在线用户
+      onlineUsers.set(socket.id, nickname);  // Register online user
   
       socket.broadcast.emit('system message', {
-          text: `💡 ${nickname} 加入了聊天室`,
+          text: `💡 ${nickname} Joined the chatroom`,
           time: getTime()
       });
 
@@ -33,7 +33,7 @@ io.on('connection', (socket) => {
       socket.emit('private message', { from: nickname, msg: msg });
     });
 
-      // 广播在线列表
+      // Broadcast Online List
       io.emit('online users', Array.from(onlineUsers, ([id, name]) => ({id, name})));
 
     });
@@ -43,28 +43,28 @@ io.on('connection', (socket) => {
     });
     
 
-  socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
+    socket.on('chat message', (msg) => {
+      io.emit('chat message', msg);
+    });
+
+    socket.on('disconnect', () => {
+      if (nickname) {
+          socket.broadcast.emit('system message', {
+              text: `⚠️ ${nickname} Left the chatroom`,
+              time: getTime()
+          });
+
+          onlineUsers.delete(socket.id);
+          io.emit('online users', Array.from(onlineUsers.values())); // Update List
+      }
+    });
+
+    socket.on('delete message', (id) => {
+      io.emit('delete message', id);  // Broadcast message ID, front-end deletion
+    });
+
   });
-
-  socket.on('disconnect', () => {
-    if (nickname) {
-        socket.broadcast.emit('system message', {
-            text: `⚠️ ${nickname} 离开了聊天室`,
-            time: getTime()
-        });
-
-        onlineUsers.delete(socket.id);
-        io.emit('online users', Array.from(onlineUsers.values())); // 更新列表
-    }
-  });
-
-  socket.on('delete message', (id) => {
-    io.emit('delete message', id);  // 广播消息 ID，前端删除
-  });
-
-});
 
 server.listen(3000, () => {
-  console.log('🚀 服务器已启动： http://localhost:3000');
+  console.log('Server started： http://localhost:3000');
 });
